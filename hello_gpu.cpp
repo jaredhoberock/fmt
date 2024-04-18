@@ -12,7 +12,7 @@ __forceinline__ __device__ void panic()
 #define FMT_HEADER_ONLY
 #define FMT_USE_INT128 0 // XXX LLVM ERROR: Undefined external symbol "__udivti3"
 #define FMT_STATIC_THOUSANDS_SEPARATOR ',' // avoid <locale>
-#define FMT_THROW(exception) panic
+#define FMT_THROW(exception) panic()
 #include <fmt/format.h>
 #include <fmt/compile.h>
 
