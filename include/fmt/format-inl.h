@@ -26,16 +26,34 @@
 
 #include "format.h"
 
+#if defined(__circle_lang__) and defined(__CUDACC__)
+#include <nv/target>
+#endif
+
 FMT_BEGIN_NAMESPACE
 namespace detail {
 
 FMT_FUNC void assert_fail(const char* file, int line, const char* message) {
+#if defined(__circle_lang__) and defined(__CUDACC__)
+  NV_IF_ELSE_TARGET(NV_IS_DEVICE, (
+    // GPU code has no access to either std::fprintf or std::terminate
+    __assert_fail(message, file, line, /*function=*/nullptr);
+  ), (
+    // Use unchecked std::fprintf to avoid triggering another assertion when
+    // writing to stderr fails
+    std::fprintf(stderr, "%s:%d: assertion failed: %s", file, line, message);
+    // Chosen instead of std::abort to satisfy Clang in CUDA mode during device
+    // code pass.
+    std::terminate();
+  ))
+#else
   // Use unchecked std::fprintf to avoid triggering another assertion when
   // writing to stderr fails
   std::fprintf(stderr, "%s:%d: assertion failed: %s", file, line, message);
   // Chosen instead of std::abort to satisfy Clang in CUDA mode during device
   // code pass.
   std::terminate();
+#endif
 }
 
 FMT_FUNC void format_error_code(detail::buffer<char>& out, int error_code,
